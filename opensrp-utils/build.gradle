@@ -1,6 +1,12 @@
 apply plugin: 'com.android.library'
 apply plugin: 'jacoco'
 apply plugin: 'com.github.kt3k.coveralls'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+// Ensure module explicitly carries coordinates
+group = project.findProperty('GROUP') ?: 'io.github.bluecodesystems'
+version = project.findProperty('VERSION_NAME') ?: '0.0.6'
 
 
 jacoco {
@@ -8,18 +14,16 @@ jacoco {
 }
 
 android {
-    compileSdkVersion androidCompileSdkVersion
-    buildToolsVersion androidBuildToolsVersion
-
-    defaultPublishConfig !isReleaseBuild() ? "debug" : "release"
+    compileSdk Integer.parseInt(project.ANDROID_BUILD_SDK_VERSION)
+    namespace 'org.smartregister.client.utils'
 
     defaultConfig {
-        minSdkVersion androidMinSdkVersion
-        targetSdkVersion androidTargetSdkVersion
+        minSdk androidMinSdkVersion
+        targetSdk Integer.parseInt(project.ANDROID_BUILD_TARGET_SDK_VERSION)
         versionCode 1
         versionName version
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
     }
 
@@ -29,22 +33,36 @@ android {
             testCoverageEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
-
         debug {
             testCoverageEnabled true
             minifyEnabled false
         }
     }
 
-    testOptions.unitTests.includeAndroidResources = true
-    lintOptions.abortOnError = false
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    testOptions {
+        unitTests.includeAndroidResources = true
+    }
+
+    lint {
+        abortOnError = false
+    }
+
+    // Expose the release variant to Gradle's maven-publish
+    publishing {
+        singleVariant("release")
+    }
 }
 
 dependencies {
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    implementation 'com.android.support:support-annotations:28.0.0'
-
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test:runner:1.5.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    implementation 'androidx.annotation:annotation:1.7.0'
 }
 
 tasks.withType(Test) {
@@ -56,15 +74,15 @@ tasks.withType(Test) {
 }
 
 
-task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest', 'createDebugCoverageReport']) {
+task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest']) {
 
     reports {
-        xml.enabled = true
-        html.enabled = true
+        xml.required.set(true)
+        // Write a single XML report file for Coveralls consumption
+        xml.outputLocation.set(file("${buildDir}/reports/jacoco/jacocoRootReport/merged.xml"))
+        html.required.set(true)
+        html.outputLocation.set(file("${buildDir}/reports/jacoco/jacocoRootReport/html"))
     }
-
-    getReports().getXml().setDestination(file("${buildDir}/reports/jacoco/jacocoRootReport/merged.xml"))
-    getReports().getHtml().setDestination(file("${buildDir}/reports/jacoco/jacocoRootReport/html"))
 
     def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*', '**/*$ViewBinder*.*']
     def debugTree = fileTree(dir: "$project.buildDir/intermediates/javac/debug", excludes: fileFilter)
@@ -73,7 +91,9 @@ task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest', 'crea
     sourceDirectories.setFrom(files([mainSrc]))
     classDirectories.setFrom(files([debugTree]))
     executionData.setFrom(fileTree(dir: project.buildDir, includes: [
-            'jacoco/testDebugUnitTest.exec', 'outputs/code-coverage/connected/*coverage.ec'
+            'jacoco/testDebugUnitTest.exec',
+            'outputs/code-coverage/**/*.ec',
+            'outputs/unit_test_code_coverage/**/*.exec'
     ]))
     sourceDirectories.setFrom([mainSrc])
 }
@@ -90,4 +110,122 @@ def isReleaseBuild() {
     return version.contains("SNAPSHOT") == false
 }
 
-apply from: '../maven.gradle'
+// Derive a release-looking version for local bundle/zip names
+def releaseVersion = (project.findProperty('VERSION_NAME') ?: project.version).toString().replace('-SNAPSHOT','')
+
+publishing {
+    publications {
+        release(MavenPublication) {
+            // Publish Android 'release' component after components are created
+            afterEvaluate {
+                from components.release
+            }
+            groupId = project.GROUP
+            artifactId = project.POM_SETTING_ARTIFACT_ID
+            // Use a non-SNAPSHOT version inside the local bundle
+            version = releaseVersion
+
+            pom {
+                name.set(project.findProperty('POM_SETTING_NAME')?.toString() ?: project.name)
+                description.set(project.findProperty('POM_SETTING_DESCRIPTION')?.toString() ?: '')
+                url.set(project.findProperty('POM_SETTING_URL')?.toString() ?: '')
+                licenses {
+                    license {
+                        name.set(project.findProperty('POM_SETTING_LICENCE_NAME')?.toString() ?: 'Apache-2.0')
+                        url.set(project.findProperty('POM_SETTING_LICENCE_URL')?.toString() ?: 'http://www.apache.org/licenses/LICENSE-2.0.txt')
+                        distribution.set(project.findProperty('POM_SETTING_LICENCE_DIST')?.toString() ?: 'repo')
+                    }
+                }
+                scm {
+                    url.set(project.findProperty('POM_SETTING_SCM_URL')?.toString() ?: '')
+                    connection.set(project.findProperty('POM_SETTING_SCM_CONNECTION')?.toString() ?: '')
+                    developerConnection.set(project.findProperty('POM_SETTING_SCM_DEV_CONNECTION')?.toString() ?: '')
+                }
+                developers {
+                    developer {
+                        id.set(project.findProperty('POM_SETTING_DEVELOPER_ID')?.toString() ?: 'dev')
+                        name.set(project.findProperty('POM_SETTING_DEVELOPER_NAME')?.toString() ?: 'Developer')
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = "CentralBundle"
+            url = layout.buildDirectory.dir("central-bundle")
+        }
+    }
+}
+
+// Sign the publication so the bundle has .asc files (required by Central Portal)
+afterEvaluate {
+    signing {
+        // Require signing when publishing the bundle
+        required { gradle.taskGraph.hasTask(":opensrp-utils:publishReleasePublicationToCentralBundleRepository") }
+        // Always use local GPG for signing as requested
+        useGpgCmd()
+        // Sign all publications to include .module signatures as well
+        sign publishing.publications
+    }
+}
+
+// Zip the local bundle for upload/sharing (similar to MaterialEditText)
+// Optionally generate legacy checksums for OSSRH (md5/sha1)
+tasks.register("generateCentralBundleChecksums") {
+    dependsOn tasks.named("publishReleasePublicationToCentralBundleRepository")
+    doLast {
+        def repoDir = layout.buildDirectory.dir("central-bundle").get().asFile
+        if (!repoDir.exists()) return
+        repoDir.eachFileRecurse { f ->
+            if (f.isFile() && !(f.name.endsWith('.md5') || f.name.endsWith('.sha1') || f.name.endsWith('.asc'))) {
+                def md5 = java.security.MessageDigest.getInstance('MD5')
+                def sha1 = java.security.MessageDigest.getInstance('SHA-1')
+                f.withInputStream { is ->
+                    byte[] buf = new byte[8192]
+                    int r
+                    while ((r = is.read(buf)) > 0) {
+                        md5.update(buf, 0, r)
+                        sha1.update(buf, 0, r)
+                    }
+                }
+                def toHex = { bytes -> bytes.collect { String.format('%02x', it) }.join() }
+                new File(f.parentFile, f.name + '.md5').text = toHex(md5.digest())
+                new File(f.parentFile, f.name + '.sha1').text = toHex(sha1.digest())
+            }
+        }
+    }
+}
+
+tasks.register("zipCentralBundle", Zip) {
+    dependsOn tasks.named("generateCentralBundleChecksums")
+    // Only include current GAV path, matching Simprints approach
+    def groupPath = project.group.toString().replace('.', '/')
+    def artifact = (project.findProperty('POM_SETTING_ARTIFACT_ID') ?: project.name).toString()
+    def versionDir = "${groupPath}/${artifact}/${releaseVersion}/**"
+    from(layout.buildDirectory.dir("central-bundle")) {
+        include versionDir
+    }
+    destinationDirectory = layout.buildDirectory.dir("distributions")
+    archiveBaseName.set("central-bundle-${project.POM_SETTING_ARTIFACT_ID}")
+    // Ensure zip file name doesn't include -SNAPSHOT
+    archiveVersion.set(releaseVersion)
+}
+
+// Helper to print out the bundle path and verify contents
+tasks.register("printCentralBundleLayout") {
+    dependsOn tasks.named("publishReleasePublicationToCentralBundleRepository")
+    doLast {
+        def base = layout.buildDirectory.dir("central-bundle").get().asFile
+        def path = new File(base, project.group.toString().replace('.', '/') + "/" + (project.findProperty('POM_SETTING_ARTIFACT_ID') ?: project.name) + "/" + releaseVersion)
+        println "Bundle path: ${path}"
+        if (path.exists()) {
+            path.eachFile { println it.name }
+        } else {
+            println "Bundle path not found. Check group/artifact/version."
+        }
+    }
+}
+
+// Publishing has been removed from this module to keep assemble green.
+// Re-add Vanniktech Maven Publish when publishing is required.

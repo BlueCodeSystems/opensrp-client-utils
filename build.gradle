@@ -2,24 +2,25 @@
 buildscript {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
+        maven { url 'https://plugins.gradle.org/m2/' }
     }
     dependencies {
-        classpath "com.android.tools.build:gradle:4.0.0"
-        classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.8.1'
-        classpath "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.11.0"
-
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
+        classpath "com.android.tools.build:gradle:8.5.2"
+        classpath 'gradle.plugin.org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.12.0'
+        classpath 'com.vanniktech:gradle-maven-publish-plugin:0.29.0'
     }
+    // Ensure plugin classpath resolves plugins compiled for Java 11+
+    configurations.classpath.attributes.attribute(
+        org.gradle.api.attributes.java.TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE,
+        17
+    )
 }
-
-apply plugin: 'io.codearte.nexus-staging'
 
 allprojects {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
     }
 
     version VERSION_NAME
@@ -31,10 +32,10 @@ ext {
     group = GROUP
     version = VERSION_NAME
 
-    androidBuildToolsVersion = "29.0.3"
+    androidBuildToolsVersion = "34.0.0"
     androidMinSdkVersion = 18
-    androidCompileSdkVersion = 29
-    androidTargetSdkVersion = 29
+    androidCompileSdkVersion = 34
+    androidTargetSdkVersion = 34
 }
 
 task clean(type: Delete) {
