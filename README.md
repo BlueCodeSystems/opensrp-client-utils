@@ -1,3 +1,9 @@
+<!-- JITPACK BADGES:START -->
+[![JitPack Latest](https://jitpack.io/v/BlueCodeSystems/opensrp-client-utils.svg)](https://jitpack.io/#BlueCodeSystems/opensrp-client-utils)
+[![Build for latest tag (v0.0.7)](https://jitpack.io/v/BlueCodeSystems/opensrp-client-utils/v0.0.7.svg)](https://jitpack.io/#BlueCodeSystems/opensrp-client-utils/v0.0.7)
+[![master-SNAPSHOT](https://jitpack.io/v/BlueCodeSystems/opensrp-client-utils/master-SNAPSHOT.svg)](https://jitpack.io/#BlueCodeSystems/opensrp-client-utils/master-SNAPSHOT)
+<!-- JITPACK BADGES:END -->
+
 # opensrp-client-utils
 
 Shared utilities, form contracts, and UI configuration helpers that back OpenSRP Android form workflows and other reusable components.
