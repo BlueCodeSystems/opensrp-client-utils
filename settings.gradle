@@ -1,3 +1,28 @@
-include ':opensrp-utils'
-include ':app'
+pluginManagement {
+  repositories {
+    mavenLocal()
+    google()
+    mavenCentral()
+    gradlePluginPortal()
+  }
+}
+
+include ':app', ':opensrp-utils'
 rootProject.name = "OpenSRP Client Utils"
+
+// Optional composite builds for sibling projects (enable with -PuseLocalSiblings=true or USE_LOCAL_SIBLINGS=true)
+def sibling = { String path -> file(path)?.exists() }
+def useLocalSiblings = (
+  gradle.startParameter.projectProperties['useLocalSiblings'] ?:
+    System.getenv('USE_LOCAL_SIBLINGS')
+)?.toString()?.toBoolean() ?: false
+
+if (useLocalSiblings && sibling('../opensrp-client-core')) {
+  includeBuild('../opensrp-client-core') {
+    dependencySubstitution {
+      substitute(module('io.github.bluecodesystems:opensrp-client-core')).using(project(':opensrp-core'))
+    }
+  }
+}
+
+// Add further sibling includes as needed following the pattern above.
