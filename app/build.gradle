@@ -1,51 +1,80 @@
-apply plugin: 'com.android.application'
+plugins {
+  id 'com.android.application'
+}
 
 android {
-    compileSdk Integer.parseInt(project.ANDROID_BUILD_SDK_VERSION)
-    namespace 'org.smartregister.client.utils.sample'
+  namespace 'org.smartregister.client.utils.sample'
+  compileSdk 35
+  buildToolsVersion '35.0.0'
 
-    defaultConfig {
-        applicationId "org.smartregister.client.utils.sample"
-        minSdk androidMinSdkVersion
-        targetSdk Integer.parseInt(project.ANDROID_BUILD_TARGET_SDK_VERSION)
-        versionCode 1
-        versionName version
+  defaultConfig {
+    applicationId 'org.smartregister.client.utils.sample'
+    minSdk 28
+    targetSdk 35
+    versionCode 1
+    versionName project.VERSION_NAME
+    testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+  }
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+  buildTypes {
+    release {
+      minifyEnabled false
+      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
     }
-
-    buildTypes {
-        release {
-            minifyEnabled false
-            testCoverageEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-        debug {
-            testCoverageEnabled true
-            minifyEnabled false
-        }
+    debug {
+      debuggable true
     }
+  }
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
+  lint {
+    checkReleaseBuilds false
+    disable 'MissingTranslation'
+    abortOnError false
+  }
 
-    testOptions {
-        unitTests.includeAndroidResources = true
+  packaging {
+    resources {
+      excludes += [
+        'META-INF/DEPENDENCIES*',
+        'META-INF/LICENSE*',
+        'META-INF/NOTICE*',
+        'META-INF/INDEX.LIST',
+        'LICENSE.txt',
+        'META-INF/AL2.0',
+        'META-INF/LGPL2.1'
+      ]
     }
+  }
 
-    lint {
-        abortOnError = false
-    }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+    coreLibraryDesugaringEnabled true
+  }
+
+  testOptions {
+    unitTests.includeAndroidResources = true
+  }
+}
+
+configurations.configureEach {
+  exclude group: 'net.zetetic', module: 'sqlcipher-android'
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test:runner:1.5.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+  implementation project(':opensrp-utils')
 
-    implementation project(':opensrp-utils')
+  implementation 'io.github.bluecodesystems:opensrp-client-core:6.2.2'
+  implementation 'com.github.BlueCodeSystems:opensrp-client-configurable-views:v2.0.1'
+  implementation 'androidx.core:core:1.13.1'
+  implementation 'androidx.appcompat:appcompat:1.6.1'
+  implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+  implementation 'com.google.android.material:material:1.12.0'
+
+  coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
+
+  testImplementation 'junit:junit:4.13.2'
+  androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+  androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+  androidTestImplementation 'androidx.test:runner:1.5.2'
 }
