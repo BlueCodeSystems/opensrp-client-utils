@@ -26,8 +26,6 @@ allprojects {
           .using(module('io.github.bluecodesystems:opensrp-client-core:6.2.2'))
         substitute(module('org.smartregister:opensrp-client-core'))
           .using(module('io.github.bluecodesystems:opensrp-client-core:6.2.2'))
-        substitute(module('io.github.bluecodesystems:opensrp-client-utils'))
-          .using(project(':opensrp-utils'))
         substitute(module('org.smartregister:opensrp-client-fp'))
           .using(module('com.github.BlueCodeSystems:opensrp-client-fp:v2.1.0'))
         substitute(module('io.github.bluecodesystems:opensrp-client-fp'))

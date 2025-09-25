@@ -64,8 +64,12 @@ configurations.configureEach {
 dependencies {
   implementation project(':opensrp-utils')
 
-  implementation 'io.github.bluecodesystems:opensrp-client-core:6.2.2'
-  implementation 'com.github.BlueCodeSystems:opensrp-client-configurable-views:v2.0.1'
+  implementation('io.github.bluecodesystems:opensrp-client-core:6.2.2') {
+    exclude group: 'io.github.bluecodesystems', module: 'opensrp-client-utils'
+  }
+  implementation('com.github.BlueCodeSystems:opensrp-client-configurable-views:v2.0.1') {
+    exclude group: 'io.github.bluecodesystems', module: 'opensrp-client-utils'
+  }
   implementation 'androidx.core:core:1.13.1'
   implementation 'androidx.appcompat:appcompat:1.6.1'
   implementation 'androidx.constraintlayout:constraintlayout:2.1.4'

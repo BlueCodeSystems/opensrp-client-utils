@@ -97,9 +97,18 @@ tasks.withType(Test).configureEach {
 }
 
 dependencies {
-  implementation('io.github.bluecodesystems:opensrp-client-core:6.2.2') { transitive = true }
-  implementation('io.github.bluecodesystems:opensrp-client-native-form-new:3.1.3') { transitive = true }
-  implementation('com.github.BlueCodeSystems:opensrp-client-configurable-views:v2.0.1') { transitive = true }
+  implementation('io.github.bluecodesystems:opensrp-client-core:6.2.2') {
+    transitive = true
+    exclude group: 'io.github.bluecodesystems', module: 'opensrp-client-utils'
+  }
+  implementation('io.github.bluecodesystems:opensrp-client-native-form-new:3.1.3') {
+    transitive = true
+    exclude group: 'io.github.bluecodesystems', module: 'opensrp-client-utils'
+  }
+  implementation('com.github.BlueCodeSystems:opensrp-client-configurable-views:v2.0.1') {
+    transitive = true
+    exclude group: 'io.github.bluecodesystems', module: 'opensrp-client-utils'
+  }
 
   implementation 'androidx.annotation:annotation:1.9.0'
   implementation 'androidx.appcompat:appcompat:1.6.1'
